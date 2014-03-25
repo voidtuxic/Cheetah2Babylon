@@ -5,12 +5,12 @@ var materials = [];
 
 var BabylonMesh = function(obj)
 {
-	var core = obj.core();
-	if(core == null)
-	{
-		this.notMesh = true;
-		return;
-	}
+    var core = obj.core();
+    if(core == null)
+    {
+        this.notMesh = true;
+        return;
+    }
     if(obj.materialTags() && obj.materialTags().length > 0)
     {
         var matId = obj.materialTags()[0].linkedToMaterial();
@@ -31,10 +31,10 @@ var BabylonMesh = function(obj)
     } else
         this.materialId = "";
 
-	this.name = obj.getParameter("name");
+    this.name = obj.getParameter("name");
     this.id = obj.getParameter("name");
     var vec3 = obj.getParameter("position");
-    this.position = [-vec3.x, vec3.y, vec3.z];
+    this.position = [vec3.x, vec3.y, vec3.z];
     vec3 = obj.getParameter("rotation");
     this.rotation = [vec3.y* Math.PI/ 180, -vec3.x* Math.PI/ 180, -vec3.z* Math.PI/ 180];
     vec3 = obj.getParameter("scale");
@@ -54,36 +54,38 @@ var BabylonMesh = function(obj)
     var tmpuv = [];
 
     for (var v = 0; v < core.vertexCount(); v++) {
-    	var vertex = core.vertex(v);
-    	this.positions.push(vertex.x);
-    	this.positions.push(vertex.y);
-    	this.positions.push(vertex.z);
+        var vertex = core.vertex(v);
+        this.positions.push(vertex.x);
+        this.positions.push(vertex.y);
+        this.positions.push(vertex.z);
     };
 
     for (var p = 0; p < core.polygonCount(); p++) {
-    	for (var t = 0; t < core.polygonSize(p) - 2; t++) {
-    		var triangle = core.triangle(p,t);
-    		for (var i = 0; i < 3; i++) {
-    			this.indices.push(core.vertexIndex(p,triangle[i]));
-    			tmpnormals[core.vertexIndex(p,triangle[i])] = core.normal(p,triangle[i]);
+        for (var t = 0; t < core.polygonSize(p) - 2; t++) {
+            var triangle = core.triangle(p,t);
+            for (var i = 0; i < 3; i++) {
+                this.indices.push(core.vertexIndex(p,triangle[i]));
+                if(!tmpnormals[core.vertexIndex(p,triangle[i])])
+                    tmpnormals[core.vertexIndex(p,triangle[i])] = [];
+                tmpnormals[core.vertexIndex(p,triangle[i])].push(core.normal(p));
                 // textcoord0 is [x,y], textcoord1 is [z,w]. Awesome doc work btw Cheetah3D
                 tmpuv[core.vertexIndex(p,triangle[i])] = core.uvCoord(p, triangle[i]);
-    		};
-    	};
+            };
+        };
     };
 
     for (var n = 0; n < tmpnormals.length; n++) {
-    	var normal = tmpnormals[n];
-    	if(normal == null) // sometimes normals get randomly nulled, wth cheetah3d
-    	{
-    		normal = {};
-    		normal.x = 0;
-    		normal.y = 0;
-    		normal.z = 0;
-    	}
-    	this.normals.push(normal.x);
-    	this.normals.push(normal.y);
-    	this.normals.push(normal.z);
+        var normal = tmpnormals[n];
+        var fn = new Vec3D(0,0,0);
+        for(var nb in normal)
+        {
+            fn = add(fn,normal[nb]);
+        }
+        var nrm = norm(fn);
+        fn = mult(fn, 1 / nrm);
+        this.normals.push(fn.x);
+        this.normals.push(fn.y);
+        this.normals.push(fn.z);
     };
     for (var n = 0; n < tmpuv.length; n++) {
         var uvCoords = tmpuv[n];
@@ -122,7 +124,26 @@ var BabylonCamera = function(cheetahCam)
     this.minZ=cheetahCam.getParameter("clipNear");
     this.maxZ=cheetahCam.getParameter("clipFar");
     // default values until we can find if cheetah3d has such data
-    this.target=[0,0,0];
+    vec3 = cheetahCam.getParameter("rotation");
+    var angles = [vec3.y* Math.PI/ 180, -vec3.x* Math.PI/ 180, -vec3.z* Math.PI/ 180];
+    // shamefully copied from http://www.euclideanspace.com/maths/geometry/rotations/conversions/eulerToQuaternion/
+    // using quaternion x vector multiplication from http://molecularmusings.wordpress.com/2013/05/24/a-faster-quaternion-vector-multiplication/
+    var c1 = Math.cos(angles[1]);
+    var s1 = Math.sin(angles[1]);
+    var c2 = Math.cos(angles[2]);
+    var s2 = Math.sin(angles[2]);
+    var c3 = Math.cos(angles[0]);
+    var s3 = Math.sin(angles[0]);
+    var w = Math.sqrt(1.0 + c1 * c2 + c1*c3 - s1 * s2 * s3 + c2*c3) / 2.0;
+    var w4 = (4.0 * w);
+    var x = (c2 * s3 + c1 * s3 + s1 * s2 * c3) / w4 ;
+    var y = (s1 * c2 + s1 * c3 + c1 * s2 * s3) / w4 ;
+    var z = (-s1 * s3 + c1 * s2 * c3 +s2) / w4 ;
+    var qv = new Vec3D(x,y,z);
+    var up = new Vec3D(0,1,0);
+    var t = qv.cross(up).multiply(2);
+    var vf = up.add(t.multiply(w).add(qv.cross(t)));
+    this.target = [-vf.x,-vf.y,-vf.z];
     this.speed=1;
     this.inertia=0.9;
     this.checkCollisions=false;
@@ -140,7 +161,7 @@ var BabylonLight = function(cheetahLight, type)
     this.id = cheetahLight.getParameter("name");
     this.type = type;
     var vec3 = cheetahLight.getParameter("position");
-    this.position = [-vec3.x, vec3.y, vec3.z];
+    this.position = [vec3.x, vec3.y, vec3.z];
 
     vec3 = cheetahLight.getParameter("rotation");
     var angles = [vec3.y* Math.PI/ 180, -vec3.x* Math.PI/ 180, -vec3.z* Math.PI/ 180];
@@ -213,8 +234,8 @@ var BabylonMaterial = function(material)
 
 function getChildren(obj, parentId)
 {
-	for (var i = 0; i < obj.childCount(); i++) {
-		var child = obj.childAtIndex(i);
+    for (var i = 0; i < obj.childCount(); i++) {
+        var child = obj.childAtIndex(i);
         switch(child.type())
         {
             case LIGHT:
@@ -253,13 +274,13 @@ function getChildren(obj, parentId)
                 }
                 break;
         }
-		if(child.childCount() > 0)
-			getChildren(child, parentId);
-	};
+        if(child.childCount() > 0)
+            getChildren(child, parentId);
+    };
 }
 
 function main(doc){
-	var obj = doc.root();
+    var obj = doc.root();
 
     for(var i = 0; i < doc.materialCount(); i++)
     {
@@ -269,23 +290,23 @@ function main(doc){
     getChildren(obj, 0);
 
     var scene = {};
-	scene.autoClear=true;
-	scene.clearColor=[1,1,1];
-	scene.ambientColor=[0,0,0];
-	scene.gravity=[0,0,0];
-	scene.cameras=cameras;
-	scene.activeCamera_=cameras[0].id;
-	scene.lights=lights;
-	scene.materials = materials;
-	scene.meshes=meshes;
-	scene.multiMaterials=[];
-	scene.shadowGenerators=[];
-	scene.skeletons=[];
+    scene.autoClear=true;
+    scene.clearColor=[1,1,1];
+    scene.ambientColor=[0,0,0];
+    scene.gravity=[0,0,0];
+    scene.cameras=cameras;
+    scene.activeCamera_=cameras[0].id;
+    scene.lights=lights;
+    scene.materials = materials;
+    scene.meshes=meshes;
+    scene.multiMaterials=[];
+    scene.shadowGenerators=[];
+    scene.skeletons=[];
 
     var path=OS.runSavePanel("babylon");
     if(path==null){
-	return;
-	}
+    return;
+    }
     
     //open file
     var file = new File(path);
@@ -293,9 +314,44 @@ function main(doc){
     file.write(JSON.stringify(scene));
     file.close();
 
+    // file = new File(path + ".manifest");
+    // file.open(WRITE_MODE);
+    // file.write('{ "version" : 1, "enableSceneOffline" : true, "enableTexturesOffline" : true }');
+    // file.close();
+
     print(materials.length + " materials");
     print(meshes.length + " meshes");
     print(cameras.length + " cameras");
     print(lights.length + " lights");
     print("\n\n");
+}
+
+function add( /* takes any number of vectors */ ){
+    var x = 0, y = 0, z = 0;
+    for( var i = 0; i < arguments.length; i++ ){
+        x += arguments[i].x;
+        y += arguments[i].y;
+        z += arguments[i].z;
+    }
+    return new Vec3D( x, y, z );
+}
+
+function mult(a, s){
+    return new Vec3D( a.x * s, a.y * s, a.z * s );
+}
+
+function dot(a, b){
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function norm(a){
+    return Math.sqrt( a.x * a.x + a.y * a.y + a.z * a.z );
+}
+
+function cross(a, b){
+    return new Vec3D(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    );
 }
