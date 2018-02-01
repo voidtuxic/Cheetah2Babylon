@@ -14,7 +14,7 @@ Cheetah2Babylon
     * rotations must be on the -Y axis
 * materials export:
     * supports diffuse, emissive and specular color (plus specular power as "shininess")
-    * supports only diffuse textures, Cheetah3D api is realy sparse on that
+    * supports diffuse, specular, emissive, bump, reflection and transparency textures
 
 More info on [my blog](http://cubeslam.net).
 
@@ -37,3 +37,7 @@ License
 	TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
 	0. You just DO WHAT THE FUCK YOU WANT TO.
+
+Additional Contributors
+-----------------------
+Peter Kingsbury [peter.kingsbury@gmail.com](mailto:peter.kingsbury@gmail.com)
