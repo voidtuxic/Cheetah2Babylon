@@ -37,3 +37,7 @@ License
 	TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
 	0. You just DO WHAT THE FUCK YOU WANT TO.
+
+Additional Contributors
+-----------------------
+Peter Kingsbury [peter.kingsbury@gmail.com](mailto:peter.kingsbury@gmail.com)

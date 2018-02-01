@@ -37,8 +37,6 @@ class BabylonMesh {
     vec3 = obj.getParameter('rotation');
     this.rotation = [vec3.y * Math.PI / 180, -vec3.x * Math.PI / 180, -vec3.z * Math.PI / 180];
 
-    // this.rotation = [vec3.x, vec3.y, vec3.z];
-
     vec3 = obj.getParameter('scale');
     this.scaling = [vec3.x, vec3.y, vec3.z];
     this.isVisible = true;
@@ -328,26 +326,7 @@ class BabylonMaterial {
       emissive:          new BabylonColor3(emission.x, emission.y, emission.z).export(),
       alpha:             1.0,
       backFaceCulling:   true,
-      wireframe:         false,
-      /* diffuseTexture:                   new BabylonTexture(),
-         ambientTexture:                   new BabylonTexture(),
-         opacityTexture:                   new BabylonTexture(),
-         reflectionTexture:                new BabylonTexture(),
-         refractionTexture:                new BabylonTexture(),
-         indexOfRefraction:                1.0,
-         emissiveTexture:                  new BabylonTexture(),
-         specularTexture:                  new BabylonTexture(),
-         bumpTexture:                      new BabylonTexture(),
-         lightmapTexture:                  new BabylonTexture(),
-         useLightmapAsShadowmap:           false,
-         checkReadyOnlyOnce:               MATERIAL_CHECK_READY_ONLY_ONCE,
-         useReflectionFresnelFromSpecular: false,
-         useEmissiveAsIllumination:        false,
-         diffuseFresnelParameters:         null,
-         opacityFresnelParameters:         null,
-         reflectionFresnelParameters:      null,
-         refractionFresnelParameters:      null,
-         emissiveFresnelParameters:        null */
+      wireframe:         false
     });
 
     let channelMappings = {
@@ -427,7 +406,6 @@ function getChildren(obj, parentId) {
         if (parentId) {
           mesh.parentId = parentId;
         }
-        // parentId = mesh.id;
         if (!mesh.notMesh) {
           meshes.push(mesh);
         }
@@ -469,8 +447,6 @@ function main(doc) {
   if (path == null) {
     return;
   }
-
-//  let path = `/Users/peter/Development/galactikore/public/src/media/scenes/testScene.babylon`;
 
   let start = Date.now();
 
