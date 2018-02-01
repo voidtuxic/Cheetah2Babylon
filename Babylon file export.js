@@ -67,8 +67,9 @@ class BabylonMesh {
         let triangle = core.triangle(p, t);
         for (let i = 0; i < 3; i++) {
           this.indices.push(core.vertexIndex(p, triangle[i]));
-          if (!tmpnormals[core.vertexIndex(p, triangle[i])])
+          if (!tmpnormals[core.vertexIndex(p, triangle[i])]) {
             tmpnormals[core.vertexIndex(p, triangle[i])] = [];
+          }
           tmpnormals[core.vertexIndex(p, triangle[i])].push(core.normal(p));
           // textcoord0 is [x,y], textcoord1 is [z,w]. Awesome doc work btw Cheetah3D
           tmpuv[core.vertexIndex(p, triangle[i])] = core.uvCoord(p, triangle[i]);
@@ -91,8 +92,9 @@ class BabylonMesh {
 
     for (let n = 0; n < tmpuv.length; n++) {
       let uvCoords = tmpuv[n];
-      if (uvCoords == null) // sometimes normals get randomly nulled, wth cheetah3d
-      {
+
+      // sometimes normals get randomly nulled, wth chee
+      if (uvCoords === null) {
         uvCoords = {};
         uvCoords.x = 0;
         uvCoords.y = 0;
@@ -250,9 +252,7 @@ class BabylonColor3 {
 
 class BabylonColor4 extends BabylonColor3 {
   constructor(r = 1, g = 1, b = 1, a = 1) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
+    super(r, g, b);
     this.a = a;
   }
 }
@@ -321,7 +321,7 @@ class BabylonMaterial {
       id:                name,
       tags:              MATERIAL_TAGS,
       disableDepthWrite: MATERIAL_DISABLE_DEPTH_WRITE,
-      ambient:           new BabylonColor3(diffuse.x, diffuse.y, diffuse.z).export(),
+      ambient:           new BabylonColor3(0, 0, 0).export(),
       diffuse:           new BabylonColor3(diffuse.x, diffuse.y, diffuse.z).export(),
       specular:          new BabylonColor3(specular.x, specular.y, specular.z).export(),
       specularPower:     material.shininess(),
@@ -365,9 +365,9 @@ class BabylonMaterial {
       let texture = textures[cheetahChannel];
       let parts = texture.texture.split('/');
       let filename = parts[parts.length - 1];
+      if (filename === 'none') continue;
       this[babylonChannel] = new BabylonTexture(filename, texture);
     }
-    print(JSON.stringify(this, null, 2));
   };
 }
 
@@ -465,15 +465,20 @@ function describeScene(obj, level = 0) {
  */
 function main(doc) {
   clearConsole();
+  let path = OS.runSavePanel('babylon');
+  if (path == null) {
+    return;
+  }
 
-  let path = `/Users/peter/Development/galactikore/public/src/media/scenes/testScene.babylon`;
+//  let path = `/Users/peter/Development/galactikore/public/src/media/scenes/testScene.babylon`;
 
   let start = Date.now();
-  let exportFile = path;
 
   let obj = doc.root();
 
   describeScene(obj);
+
+  print('\n');
 
   for (let i = 0; i < doc.materialCount(); i++) {
     let mat = doc.materialAtIndex(i);
@@ -497,27 +502,23 @@ function main(doc) {
     skeletons:        [],
   };
 
-  /*let path = OS.runSavePanel('babylon');
-  if (path == null) {
-    return;
-  }
-*/
-  //open file
+  // open file
   let file = new File(path);
   file.open(WRITE_MODE);
   file.write(JSON.stringify(scene, null, 2));
   file.close();
 
-  // print(materials.length + ' materials');
-  // print(meshes.length + ' meshes');
-  // print(cameras.length + ' cameras');
-  // print(lights.length + ' lights');
+  print('\n');
+
+  print(materials.length + ' materials');
+  print(meshes.length + ' meshes');
+  print(cameras.length + ' cameras');
+  print(lights.length + ' lights');
 
   let end = Date.now();
 
-  print(`\nExported to ${exportFile} (${end - start} ms)`);
+  print(`\nExported to ${path} (${end - start} ms)`);
 
-  print('\n\n');
 }
 
 /**
